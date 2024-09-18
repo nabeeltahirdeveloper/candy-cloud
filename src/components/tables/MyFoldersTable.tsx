@@ -133,6 +133,12 @@ const MyFoldersTable = () => {
     }
   };
 
+  const handleRightClick = (event: { preventDefault: () => void; }, folderId: React.SetStateAction<string | null>) => {
+    event.preventDefault(); // Prevent the default context menu
+    setSelectedFileId(folderId);
+    setIsModalVisible(true); // Open the modal on right-click
+  };
+
   const menu = (fileId: string | number) => (
     <Menu>
       <Menu.Item key="add" onClick={() => showAddModal(fileId.toString())}>
@@ -146,19 +152,21 @@ const MyFoldersTable = () => {
 
   return (
     <div className="p-6">
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-6">
         {data
           .filter((folder) => folder.type === "folder") // Show only folder types
           .map((folder) => (
             <div
               key={folder.id}
               className="bg-white shadow-lg rounded-lg p-4 relative"
+              onContextMenu={(event) => handleRightClick(event, folder.id.toString())} // Attach the right-click handler
             >
-              <div className="flex justify-between items-center">
+              <div className="flex gap-1 items-center">
                 {/* Folder Name */}
+                <img src={folderIcon} alt="Folder Icon" className="h-6 w-6" />
                 <Typography.Title
                   level={5}
-                  className="text-center font-medium cursor-pointer"
+                  className=" mt-2 font-medium cursor-pointer w-28 truncate"
                   onClick={() =>
                     navigate("/drive/folder", {
                       state: { id: folder.id, name: folder.file_name },
@@ -168,10 +176,9 @@ const MyFoldersTable = () => {
                   {folder.file_name}
                 </Typography.Title>
                 {/* Folder Icon on the right */}
-                <img src={folderIcon} alt="Folder Icon" className="h-6 w-6" />
               </div>
-              <Typography.Text className="text-sm text-gray-500">
-                Last Edited: {new Date(folder.updated_at).toLocaleDateString()}
+              <Typography.Text className="text-xs text-gray-500">
+                {new Date(folder.updated_at).toLocaleDateString()}
               </Typography.Text>
 
               {/* Dropdown for actions */}

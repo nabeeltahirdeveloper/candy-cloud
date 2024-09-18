@@ -345,7 +345,7 @@ export default function SliderContent() {
           className="p-0 flex items-center justify-start gap-2 text-sm font-medium text-[#888888]"
         >
           <ClockCircleFilled />
-          <Text> ent</Text>
+          <Text> Recently</Text>
         </Button>
         <Button
           onClick={() => navigate("/drive/starred")}

@@ -210,16 +210,25 @@ export default function CardWithMenu({
     }
   };
 
-  const handleDownloadFile = () => {
-    const downloadUrl = `https://cms.candycloudy.com/${item.url}`;
-    const link = document.createElement("a");
-    link.href = downloadUrl;
-    link.download = item.name; // Specify the file name for the download
-    link.target = "_self"; // Ensure the file is downloaded directly, not opened in a new tab
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  const handleDownloadFile = async () => {
+    try {
+      const response = await fetch(`https://cms.candycloudy.com/${item.url}`, {
+        method: "GET",
+      });
+      const blob = await response.blob(); // Create a blob from the response
+      const downloadUrl = URL.createObjectURL(blob); // Create a URL from the blob
+      const link = document.createElement("a");
+      link.href = downloadUrl;
+      link.setAttribute('download', item.name); // Suggest a filename for the download
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(downloadUrl); // Clean up the object URL after download
+    } catch (error) {
+      console.error("Error downloading the file:", error);
+    }
   };
+  
 
   //  const handleDownloadFile = async () => {
   //    try {
