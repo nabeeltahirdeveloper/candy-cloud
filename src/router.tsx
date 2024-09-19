@@ -38,7 +38,7 @@ import Stareed from "./pages/client/Stareed";
 import Trash from "./pages/client/trash";
 import GoglbalRoute from "./pages/client/GoglbalRoute";
 import FolderDetails from "./pages/client/folder";
-
+import Recently from "./pages/client/Recently";
 const router = createBrowserRouter([
   {
     path: "/",
@@ -99,6 +99,10 @@ const router = createBrowserRouter([
                   {
                     path: "trash",
                     element: <Trash />,
+                  },
+                  {
+                    path: "recently",
+                    element: <Recently />,
                   },
                   {
                     path: "chat",

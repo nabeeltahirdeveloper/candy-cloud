@@ -7,6 +7,7 @@ import { PlayCircleFilled } from "@ant-design/icons";
 import { convertBytes } from "../../utils/helpers";
 import { truncate } from "lodash";
 import { Typography } from "antd";
+import HomeHead from "../../components/UI/HomeHead";
 const { Text } = Typography;
 
 const Stareed = () => {
@@ -17,7 +18,8 @@ const Stareed = () => {
   }, []);
   // console.log(data)
   return (
-    <div className="ml-[30px] side sm:ml-[160px] md:ml-[250px] lg:ml-0">
+    <div className="ml-[30px] side sm:ml-[160px] md:ml-[250px] lg:ml-0 py-5 px-4">
+       <HomeHead />
       <div className="py-5 px-5">
         <h1 className="text-3xl">Starred</h1>
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-5 mt-3 pb-16 sm:pb-0">

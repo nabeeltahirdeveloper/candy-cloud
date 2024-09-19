@@ -341,6 +341,7 @@ export default function SliderContent() {
           <Text className="text-[#222E57]">Shared with me</Text>
         </Button>
         <Button
+        onClick={() => navigate("/drive/recently")}
           type="link"
           className="p-0 flex items-center justify-start gap-2 text-sm font-medium text-[#888888]"
         >
