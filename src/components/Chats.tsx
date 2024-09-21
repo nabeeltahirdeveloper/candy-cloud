@@ -11,7 +11,7 @@ const Chats = () => {
     <Flex
       vertical
       gap={24}
-      className="p-4 rounded-2xl bg-white h-full  max-w-[36px] min-w-[336px] max-lg:max-w-[280px] max-lg:min-w-[280px] max-sm:max-w-full max-sm:min-w-0 w-auto max-sm:w-full "
+      className="p-4 rounded-lg bg-white h-full  max-w-[36px] min-w-[336px] max-lg:max-w-[280px] max-lg:min-w-[280px] max-sm:max-w-full max-sm:min-w-0 w-auto max-sm:w-full "
     >
       <Flex  justify="space-between" align="center">
         <Text className="text-lg font-medium text-[#222E57]">Inbox</Text>
@@ -42,7 +42,7 @@ const ChatCard = ({ chatId }: { chatId: number }) => {
 
   return (
     <Flex
-      className={`p-4 min-h-[95px] cursor-pointer rounded-2xl  hover:bg-[#0154A01A] duration-100 ${
+      className={`p-4 min-h-[95px] cursor-pointer rounded-lg  hover:bg-[#0154A01A] duration-100 ${
         isChatSelected && "bg-[#0154A01A] !cursor-default"
       } `}
       gap={8}

@@ -15,7 +15,8 @@ interface FolderNode {
 
 const FolderDetails = () => {
   const location = useLocation();
-  const { id, name } = location.state || {};
+  const { id, name,folder } = location.state || {};
+  // const { folder } = location.state || {};
   const [folders, setFolders] = useState<FolderNode[]>([]);
   const [expandedFolders, setExpandedFolders] = useState<(string | number)[]>(
     []
@@ -242,20 +243,38 @@ const FolderDetails = () => {
 
   return (
     <div className="folder-container">
-      <h1>Folders for Parent Folder: {name}</h1>
-      <button
-        className="add-button hidden"
-        onClick={() => handleAdd(currentFolderId)}
-      >
-        Add Folder
-      </button>
-      {folders.length > 0 ? (
-        renderTree(folders)
-      ) : (
-        <p>No folders available for this folder.</p>
-      )}
+      <div className="folder-tree">
+        <h1>Folders for Parent Folder: {name}</h1>
+        <button
+          className="add-button hidden"
+          onClick={() => handleAdd(currentFolderId)}
+        >
+          Add Folder
+        </button>
+        {folders.length > 0 ? (
+          renderTree(folders)
+        ) : (
+          <p>No folders available for this folder.</p>
+        )}
+      </div>
+  
+      <div className="folder-properties">
+        {folder ? (
+          <div>
+            <h3>Folder Properties</h3>
+            <p><strong>Name:</strong> {folder.file_name}</p>
+            <p><strong>Type:</strong> Folder</p>
+            <p><strong>Owner:</strong> {folder.owner || "admin"}</p>
+            <p><strong>Created:</strong> {new Date(folder.created_at).toLocaleDateString()}</p>
+            <p><strong>Modified:</strong> {new Date(folder.updated_at).toLocaleDateString()}</p>
+          </div>
+        ) : (
+          <p>No folder selected</p>
+        )}
+      </div>
     </div>
   );
+  
 };
 
 export default FolderDetails;

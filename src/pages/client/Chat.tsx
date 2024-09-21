@@ -14,7 +14,7 @@ const { useBreakpoint } = Grid;
 const Chat = () => {
   return (
     <div className="chat-container">
-      <Flex vertical className={`h-full border rounded-lg shadow-lg bg-white`}>
+      <Flex vertical className={`h-full border rounded-lg shadow-lg bg-white mr-60 w-full`}>
         <ChatHeader />
         <ChatMessages />
         <ChatInput />
@@ -161,7 +161,7 @@ const ChatMessageCard = ({ message }: { message: messageProps }) => {
         </div>
       </Flex>
       <div
-        className={`py-3 px-4 rounded-2xl max-w-[436px] ${
+        className={`py-3 px-4 rounded-lg max-w-[336px] ${
           message.sender_Type === 1 ? "bg-[#0154A0] " : "bg-white "
         } shadow-md`}
       >
@@ -181,7 +181,7 @@ const ChatMessageCard = ({ message }: { message: messageProps }) => {
 const ChatInput = () => {
   return (
     <Flex gap={16} className="h-20 max-md:px-4 py-4  bg-[#f5f5f5] border-t shadow-md">
-      <div className="relative h-full " style={{ aspectRatio: "1/1" }}>
+      <div className="relative h-full ml-4" style={{ height:'2.7rem',width:'2.7rem' }}>
         <Image
           preview={false}
           src={`https://i.pravatar.cc/300/?img=12`}
@@ -189,10 +189,10 @@ const ChatInput = () => {
           className="rounded-full "
         />
       </div>
-      <div className="relative flex-1 h-full">
+      <div className="relative flex-1 h-full px-0 mr-4">
         <Input
           placeholder="Write your message here..."
-          className="rounded-2xl h-full"
+          className="rounded-lg h-full"
         ></Input>
         <Flex
           gap={20}

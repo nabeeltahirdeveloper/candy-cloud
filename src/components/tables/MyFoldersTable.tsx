@@ -150,15 +150,21 @@ const MyFoldersTable = () => {
     </Menu>
   );
 
+  const handleFolderClick = (folder: DataType) => {
+    navigate("/drive/folder", {
+      state: { id: folder.id, name: folder.file_name, folder },
+    });
+  };
+
   return (
     <div className="p-6">
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-2 gap-6">
         {data
           .filter((folder) => folder.type === "folder") // Show only folder types
           .map((folder) => (
             <div
               key={folder.id}
-              className="bg-white shadow-lg rounded-lg p-4 relative"
+              className="bg-white shadow-lg rounded-2xl p-4 relative"
               onContextMenu={(event) => handleRightClick(event, folder.id.toString())} // Attach the right-click handler
             >
               <div className="flex gap-1 items-center">
@@ -167,19 +173,15 @@ const MyFoldersTable = () => {
                 <Typography.Title
                   level={5}
                   className=" mt-2 font-medium cursor-pointer w-28 truncate"
-                  onClick={() =>
-                    navigate("/drive/folder", {
-                      state: { id: folder.id, name: folder.file_name },
-                    })
-                  }
+                  onClick={() => handleFolderClick(folder)}
                 >
                   {folder.file_name}
                 </Typography.Title>
                 {/* Folder Icon on the right */}
-              </div>
-              <Typography.Text className="text-xs text-gray-500">
+              <Typography.Text className="text-xs text-gray-500 ml-8">
                 {new Date(folder.updated_at).toLocaleDateString()}
               </Typography.Text>
+              </div>
 
               {/* Dropdown for actions */}
               <div className="absolute top-2 right-2">
