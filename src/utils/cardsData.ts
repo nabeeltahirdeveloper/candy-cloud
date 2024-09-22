@@ -25,17 +25,7 @@ export const Card1Icons = [
     text: "Documents",
     path: "/files/documents",
     icon: docsIcon,
-  },
-  {
-    text: "Downloads",
-    path: "/downloads",
-    icon: downloadsIcon,
-  },
-  {
-    text: "My Music",
-    path: "/files/archive",
-    icon: archiveIcon,
-  },
+  }
 ];
 
 type iconType = "image" | "music" | "video" | "doc";

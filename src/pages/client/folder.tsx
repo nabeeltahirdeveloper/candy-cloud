@@ -3,7 +3,9 @@ import { useLocation } from "react-router-dom";
 import Cookies from "js-cookie";
 import "./folder.css";
 import { message } from "antd";
+import folderIcon from "../../assets/icons/folder-icon.svg"; // Use your folder icon here
 
+import { useFolderContext } from "../../context/FolderContext"; // Adjust the path as necessary
 interface FolderNode {
   id: string | number;
   name: string;
@@ -15,18 +17,23 @@ interface FolderNode {
 
 const FolderDetails = () => {
   const location = useLocation();
-  const { id, name,folder } = location.state || {};
+  const { id, name, folder } = location.state || {};
+  const { setCurrentFolderId } = useFolderContext();  // Corrected the function name here
   // const { folder } = location.state || {};
   const [folders, setFolders] = useState<FolderNode[]>([]);
   const [expandedFolders, setExpandedFolders] = useState<(string | number)[]>(
     []
   );
-  const [currentFolderId, setCurrentFolderId] = useState(id);
+
+  useEffect(() => {
+    if (id) {
+      setCurrentFolderId(id);  // Use the corrected function name
+    }
+  }, [id, setCurrentFolderId]);
 
   useEffect(() => {
     const fetchFolders = async (parentId: string | number) => {
       const token = Cookies.get("user");
-
       try {
         const response = await fetch(
           `https://cms.candycloudy.com/api/v1/drive/file-entries?parentIds=${parentId}`,
@@ -38,20 +45,42 @@ const FolderDetails = () => {
             },
           }
         );
-
         if (!response.ok) {
           throw new Error(`Error: ${response.status}`);
         }
-
         const data = await response.json();
         setFolders(data.data || []);
       } catch (error) {
         console.error("Error fetching folders:", error);
       }
     };
+    fetchFolders(id);  // Updated to use the context-managed ID
+  }, [id]);
 
-    fetchFolders(currentFolderId);
-  }, [currentFolderId]);
+  useEffect(() => {
+    const fetchFiles = async () => {
+      const token = Cookies.get("user");
+      if (!setCurrentFolderId) return;
+  
+      try {
+        const response = await fetch(`https://cms.candycloudy.com/api/v1/drive/files?folderId=${setCurrentFolderId}`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+        const data = await response.json();
+        setFolders(data.files || []);  // Assuming 'files' is the key in response
+      } catch (error) {
+        console.error("Failed to fetch files:", error);
+      }
+    };
+  
+    fetchFiles();
+  }, [setCurrentFolderId]);
+  
 
   const toggleFolder = (folderId: string | number) => {
     setExpandedFolders((prevExpanded) =>
@@ -62,7 +91,7 @@ const FolderDetails = () => {
   };
 
   const openFolder = (folderId: string | number) => {
-    setCurrentFolderId(folderId);
+    setCurrentFolderId(folderId.toString());
   };
 
   const handleAdd = async (parentId: string | number) => {
@@ -242,31 +271,30 @@ const FolderDetails = () => {
   };
 
   return (
-    <div className="folder-container">
-      <div className="folder-tree">
-        <h1>Folders for Parent Folder: {name}</h1>
-        <button
-          className="add-button hidden"
-          onClick={() => handleAdd(currentFolderId)}
-        >
-          Add Folder
-        </button>
+    <div className="flex min-h-screen">
+      <div className="flex-1 p-4">
+        <h1 className="text-2xl font-bold mb-4">Folders for Parent Folder: {name}</h1>
+        
         {folders.length > 0 ? (
+          // Assuming renderTree is defined elsewhere in your code to render the folder structure
           renderTree(folders)
         ) : (
           <p>No folders available for this folder.</p>
         )}
       </div>
-  
-      <div className="folder-properties">
+
+      <div className="w-1/4 bg-gray-100 p-4">
         {folder ? (
-          <div>
-            <h3>Folder Properties</h3>
-            <p><strong>Name:</strong> {folder.file_name}</p>
-            <p><strong>Type:</strong> Folder</p>
-            <p><strong>Owner:</strong> {folder.owner || "admin"}</p>
-            <p><strong>Created:</strong> {new Date(folder.created_at).toLocaleDateString()}</p>
-            <p><strong>Modified:</strong> {new Date(folder.updated_at).toLocaleDateString()}</p>
+          <div className="sticky top-0">
+               <div className="flex gap-2">
+               <img src={folderIcon} alt="Folder Icon" className="h-6 w-6" />
+               <h3 className="text-lg font-semibold">Folder Properties</h3>
+               </div>
+            <p className="mt-10"><strong>Name:</strong> {folder.file_name}</p>
+            <p className="mt-10"><strong>Type:</strong> Folder</p>
+            <p className="mt-10"><strong>Owner:</strong> {folder.owner || "admin"}</p>
+            <p className="mt-10"><strong>Created:</strong> {new Date(folder.created_at).toLocaleDateString()}</p>
+            <p className="mt-10"><strong>Modified:</strong> {new Date(folder.updated_at).toLocaleDateString()}</p>
           </div>
         ) : (
           <p>No folder selected</p>
@@ -274,7 +302,6 @@ const FolderDetails = () => {
       </div>
     </div>
   );
-  
 };
 
 export default FolderDetails;

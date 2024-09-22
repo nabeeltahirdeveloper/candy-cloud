@@ -40,7 +40,7 @@ const data = [
 ];
 
 const COLORS = ["#0154A0", "#56D6F3", "#7490F4", "#FF4F4F", "#F3F6F9"];
-function HomeHead() {
+function HomeHead({ onSearch }: { onSearch: (value: string) => void }): JSX.Element {
   const { token } = useToken();
   const [workspaceItems, setWorkspaceItems] = useState<
     {
@@ -234,7 +234,7 @@ function HomeHead() {
 
   return (
     <div className="flex items-center justify-between w-full gap-2 mb-8 leading-none lg:gap-8 ">
-      <SearchBar />
+        <SearchBar onSearch={onSearch} />
       <div className="h-full leading-none flex-center">
         <Button
           onClick={() => storageClosure.onOpen()}

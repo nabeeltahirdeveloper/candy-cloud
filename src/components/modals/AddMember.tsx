@@ -2,6 +2,8 @@ import { CloseCircleOutlined, PlusCircleOutlined } from "@ant-design/icons";
 import { Button, Form, Input, Modal, Tag, Tooltip, Typography } from "antd";
 import React, { ChangeEvent, useState } from "react";
 import { postShareWithEmail } from "../../api/amt/files/postShareWithEmail";
+import { useEffect} from "react";
+import axios from "axios";
 
 const { Text } = Typography;
 
@@ -22,10 +24,44 @@ const AddMemberModal: React.FC<AddMemberModalProps> = ({
   const [emails, setEmails] = useState<string[]>([]);
   const [inputValue, setInputValue] = useState<string>("");
   const [inputError, setInputError] = useState<string>("");
+  interface User {
+    id: string;
+    email: string;
+  }
+  
+  const [searchResults, setSearchResults] = useState<User[]>([]);
 
-  const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
-    setInputValue(e.target.value);
-  };
+  const handleInputChange = (e: { target: { value: any; }; }) => {
+    const input = e.target.value;
+    setInputValue(input);
+    fetchUserSuggestions(input);  // Call the API on every input change
+};
+
+const fetchUserSuggestions = async (input: any) => {
+  try {
+    const response = await axios.get(`https://cms.candycloudy.com/api/handleUsers?page=1&query=${input}`);
+    if (response.data && Array.isArray(response.data.data)) {  // Make sure to access response.data.data
+      setSearchResults(response.data.data);  // Assuming response.data.data is the array
+      console.log("Fetched users:", response.data.data);
+    } else {
+      setSearchResults([]);  // Clear previous results if current fetch is empty or incorrect
+      console.log("No users found or incorrect data structure:", response.data);
+    }
+  } catch (error) {
+    console.error("Failed to fetch users:", error);
+    setSearchResults([]);  // Ensure to clear results on error
+  }
+};
+
+
+
+const handleEmailClick = (email: React.SetStateAction<string>) => {
+  setInputValue(email);  // Set the clicked email into the input field
+  setSearchResults([]);  // Optionally clear the search results after selection
+};
+
+
+  
   // add any thing to access posh
   const validateEmail = (email: string): boolean => {
     const re = /\S+@\S+\.\S+/;
@@ -106,25 +142,31 @@ const AddMemberModal: React.FC<AddMemberModalProps> = ({
       ]}
     >
       <Form form={form} layout="vertical">
-        <Form.Item
-          label="Invite"
-          validateStatus={inputError ? "error" : ""}
-          help={inputError}
-        >
-          <Input
-            value={inputValue}
-            onChange={handleInputChange}
-            onPressEnter={handleInputConfirm}
-            placeholder="Enter email addresses"
-            suffix={
-              inputError && (
-                <Tooltip title={inputError} color="red">
-                  <CloseCircleOutlined style={{ color: "red" }} />
-                </Tooltip>
-              )
-            }
-          />
-        </Form.Item>
+      <Form.Item label="Invite" validateStatus={inputError ? "error" : ""} help={inputError}>
+  <Input
+    value={inputValue}
+    onChange={handleInputChange}
+    onPressEnter={handleInputConfirm}
+    placeholder="Enter email addresses"
+    suffix={
+      inputError && (
+        <Tooltip title={inputError} color="red">
+          <CloseCircleOutlined style={{ color: "red" }} />
+        </Tooltip>
+      )
+    }
+  />
+<div style={{ marginTop: "10px" }}>
+  {searchResults.map((user) => (
+    <div key={user.id} style={{ padding: "5px", border: "1px solid #ddd", margin: "5px 0", cursor: "pointer" }} onClick={() => handleEmailClick(user.email)}>
+      {user.email}
+    </div>
+  ))}
+</div>
+
+
+</Form.Item>
+
         <Form.Item>
           <div>
             {emails.map((email) => (

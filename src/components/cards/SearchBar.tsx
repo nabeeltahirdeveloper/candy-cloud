@@ -1,18 +1,18 @@
+// SearchBar.tsx
+import React from "react";
+import { Input } from "antd";
 import { SearchOutlined } from "@ant-design/icons";
-import Input, { SearchProps } from "antd/es/input";
-import Search from "antd/es/input/Search";
 
-const onSearch: SearchProps["onSearch"] = (value, _e, info) => (
-  info?.source, value
-);
+interface SearchBarProps {
+  onSearch: (value: string) => void; // Add this line
+}
 
-export default function SearchBar() {
+const SearchBar: React.FC<SearchBarProps> = ({ onSearch }) => {
   return (
     <Input
       placeholder="Search here"
       allowClear
       size="large"
-      // onSearch={onSearch}
       className="min-w-[100px] flex-1 rounded-[20px] p-4 border-none outline-none"
       prefix={
         <button onClick={() => "Custom action"}>
@@ -21,7 +21,9 @@ export default function SearchBar() {
           />
         </button>
       }
-      // enterButton={false}
+      onChange={(e) => onSearch(e.target.value)} // Use the onSearch prop here
     />
   );
-}
+};
+
+export default SearchBar;

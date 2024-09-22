@@ -83,7 +83,9 @@ interface FileItem {
 
 interface CardWithMenuProps {
   item: FileItem;
+  searchTerm: string;  // Add this line
   refreshRecent: () => void;
+  selectedType: string[]; // This should be an array of strings
 }
 
 interface StarredItem {
@@ -92,8 +94,25 @@ interface StarredItem {
 
 export default function CardWithMenu({
   item,
+  searchTerm,
   refreshRecent,
+  selectedType,
 }: CardWithMenuProps) {
+  if (!item.name.toLowerCase().includes(searchTerm.toLowerCase())) {
+    return null;  // This hides the component if the search term doesn't match the item name
+  }
+// In CardWithMenu component
+if (!item.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    (selectedType.length > 0 && !selectedType.includes(item.type.toLowerCase().split('/')[0]))) {
+  console.log(`Filtered out: ${item.name} with type ${item.type}`);
+  return null;
+}
+
+
+
+
+  
+
   const shareModal = useDisclosure<FileItem>();
   const renameModal = useDisclosure();
   const apiUrl = import.meta.env.VITE_API_URL;
@@ -265,6 +284,15 @@ export default function CardWithMenu({
       key: "1",
       icon: <UserAddOutlined />,
       onClick: () => shareModal.onOpen(item),
+    },
+    {
+      label: "Copy",
+      key: "9",
+      icon: <CopyOutlined />,
+      onClick: () => {
+        navigator.clipboard.writeText(`https://cms.candycloudy.com/${item.url}`)
+          
+      },
     },
     {
       label: "Get link",

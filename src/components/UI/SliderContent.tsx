@@ -39,6 +39,7 @@ import { addFiles } from "../../api/amt/files/addFilesApi";
 import axios from "axios";
 import { fetchDataRecentView } from "../../api/amt/workspace/recent";
 import CardWithMenu from "../cards/CardWithMenu";
+import { useFolderContext } from '../../context/FolderContext'; // Adjust the path as necessary
 
 export default function SliderContent() {
   const navigate = useNavigate();
@@ -52,6 +53,7 @@ export default function SliderContent() {
   const [showModal, setShowModal] = useState(false);
   const [folderName, setFolderName] = useState("");
   const workspace: any = useSelector((state: RootState) => state.workspace);
+  const { currentFolderId } = useFolderContext();
   // console.log("workspace => 1",workspace)
 
   // Helper function to get token from cookies
@@ -80,8 +82,7 @@ export default function SliderContent() {
     // Return the part after the '=' (cookie value), or null if not found
     return cookie ? cookie.split("=")[1].trim() : null;
   };
-  const onDrop = useCallback(
-    async (acceptedFiles: File[]) => {
+  const onDrop = useCallback(async (acceptedFiles: File[]) => {
       const Token = getCookie("user");
 
       if (Token === null) {
@@ -132,6 +133,7 @@ export default function SliderContent() {
 
           // Pass the binary data (Blob) to the upload function
           await uploadBinaryFile(url, blobData, extractedKey, Token, file); // Pass key, token, and file for the next step
+          console.log("Uploading to folder ID:", currentFolderId);
         } catch (error) {
           console.error("Error uploading file:", error);
         }
@@ -169,22 +171,17 @@ export default function SliderContent() {
   };
   // const [recent, setRecent] = useState<any[]>([]);
   // Function to notify API that file upload has completed
-  const notifyFileUploadSuccess = async (
-    extractedKey: string,
-    token: string,
-    file: File
-  ) => {
+  const notifyFileUploadSuccess = async (extractedKey: string, token: string, file: File) => {
     try {
       const payload = {
-        clientExtension: file.name.split(".").pop(), // Get the file extension
-        clientMime: file.type, // File mime type
-        clientName: file.name, // Original filename
-        filename: extractedKey, // The key returned from the presigned URL API
-        size: file.size, // File size in bytes
+        clientExtension: file.name.split(".").pop(),
+        clientMime: file.type,
+        clientName: file.name,
+        filename: extractedKey,
+        size: file.size,
+        folderId: currentFolderId  // Include the current folder ID
       };
-
-      // console.log("Notifying file upload success with data: ", payload);
-
+  
       const response = await axios.post(
         "https://cms.candycloudy.com/api/v1/s3/entries",
         payload,
@@ -196,12 +193,11 @@ export default function SliderContent() {
           },
         }
       );
-      // fetchDataRecentView(setRecent);
-      // console.log("File upload notification response:", response.data);
     } catch (error) {
       console.error("Error notifying file upload success:", error);
     }
   };
+  
 
   const { open } = useDropzone({
     onDrop,

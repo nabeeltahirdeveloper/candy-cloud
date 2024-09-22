@@ -17,7 +17,7 @@ import uploadIcon from "../../assets/icons/upload_icon.svg";
 import red from "../../assets/icons/download_icon.svg";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../../store/store";
-import { useEffect, useState } from "react";
+import { SetStateAction, useEffect, useState } from "react";
 import { fetchDataRecentView } from "../../api/amt/workspace/recent";
 import Cookies from "js-cookie";
 import { addUser } from "../../store/slices/userSlice";
@@ -40,8 +40,13 @@ export default function Home() {
   // this part is only for simulate file uploading
   const { catchFile } = useSelector((state: RootState) => state.GlobalReducer);
   const user = useSelector((state: RootState) => state.user);
-
+  const [searchTerm, setSearchTerm] = useState("");
   const [filesType, setFilesType] = useState<string[]>([]);
+
+
+  const handleSearch = (value: string) => {
+    setSearchTerm(value); // Set the search term based on user input
+  };
 
   useEffect(() => {
     if (catchFile) {
@@ -55,6 +60,12 @@ export default function Home() {
   const dispatch = useDispatch();
   const [recent, setRecent] = useState<any[]>([]);
   const [dataStar, setData] = useState<any[]>([]);
+  const [selectedType, setSelectedType] = useState<string[]>([]);
+
+
+
+
+
   useEffect(() => {
     fetchDataRecentView(setRecent);
     fetchGetUser();
@@ -63,15 +74,40 @@ export default function Home() {
   const refreshRecentView = () => {
     fetchDataRecentView(setRecent); // Function to refresh recent files
   };
+
+  const handleCardClick = (type: string) => {
+    let normalizedType: string[];
+    switch (type) {
+      case 'documents':
+        normalizedType = ["docx", "csv", "pptx", "spreadsheet", "pdf", "text", "word", "excel", "powerpoint"];
+        break;
+      case 'images':
+        normalizedType = ["image", "jpeg", "png"];
+        break;
+      case 'music':
+        normalizedType = ["mp3", "wav", "m4a", "audio/mpeg", "audio"]; // Include 'audio' explicitly
+        break;
+      case 'videos':
+        normalizedType = ["mp4", "avi", "mov"];
+        break;
+      default:
+        normalizedType = [type];
+        break;
+    }
+    setSelectedType(normalizedType.map(t => t.toLowerCase()));
+    console.log("Normalized types set for", type, ":", normalizedType);
+  };
+  
+  
   return (
     <Page className="p-4 ml-[30px] side sm:ml-[160px] md:ml-[250px] lg:ml-0">
-      <HomeHead />
+      <HomeHead onSearch={handleSearch} />
 
       <Flex gap={24} className="max-xl:flex-col">
         <Flex vertical gap={32} flex={1} className="w-full">
           <div className="grid grid-cols-3 gap-6 max-lg:grid-cols-2">
             {Card1Icons.map((item, i) => (
-              <Card1 key={i} icon={item.icon} text={item.text} dataSize={12} />
+              <Card1 key={i} icon={item.icon} text={item.text} dataSize={12} onClick={() => handleCardClick(item.text.toLowerCase())}  />
             ))}
           </div>
           {/* <div className="flex flex-wrap w-full gap-4">
@@ -87,6 +123,8 @@ export default function Home() {
           <div className="grid grid-cols-3 gap-6 max-xl:grid-cols-2 max-lg:grid-cols-1">
             {recent.map((item, index) => (
               <CardWithMenu
+              selectedType={selectedType} // Pass the selected type here
+              searchTerm={searchTerm} 
                 key={index}
                 item={{
                   id: item.id,

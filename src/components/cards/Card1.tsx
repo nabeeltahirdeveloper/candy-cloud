@@ -7,12 +7,13 @@ interface Props {
   text: string;
   icon: string | JSX.Element;
   dataSize: string | number;
+  onClick: () => void;  // Add this line for the onClick handler
 }
 
-export default function Card1({ text, icon, dataSize }: Props) {
+export default function Card1({ text, icon, dataSize, onClick }: Props) {
   
   return (
-    <div className="p-6 flex items-center justify-between max-lg:flex-col max-lg:items-start  card w-full  gap-4">
+    <div className="p-6 flex items-center justify-between max-lg:flex-col max-lg:items-start  card w-full  gap-4" onClick={onClick}>
       <div className="flex-center gap-2 h-fit">
         <img src={icon as string} alt={text} />
         <Text className="capitalize text-primary-500 font-medium">{text}</Text>
