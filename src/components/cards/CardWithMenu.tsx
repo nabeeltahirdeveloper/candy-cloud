@@ -298,6 +298,10 @@ if (!item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       label: "Get link",
       key: "2",
       icon: <LinkOutlined />,
+      onClick: () => {
+        navigator.clipboard.writeText(`https://cms.candycloudy.com/${item.url}`)
+          
+      },
     },
     {
       label: eleInStar ? "Remove from starred" : "Add to starred",

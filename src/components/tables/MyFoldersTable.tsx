@@ -14,7 +14,7 @@ import folderIcon from "../../assets/icons/folder-icon.svg"; // Use your folder 
 import foldersApi from "../../api/foldersApi";
 import axios from "axios";
 import Cookies from "js-cookie";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 const { Option } = Select;
 
@@ -29,6 +29,7 @@ interface DataType {
 
 const MyFoldersTable = () => {
   const [data, setData] = useState<DataType[]>([]);
+  const [breadcrumbPath, setBreadcrumbPath] = useState([{ id: 'root', name: 'Home' }]);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [availableFolders, setAvailableFolders] = useState<DataType[]>([]);
   const [selectedFileId, setSelectedFileId] = useState<string | null>(null);
@@ -151,13 +152,29 @@ const MyFoldersTable = () => {
   );
 
   const handleFolderClick = (folder: DataType) => {
+    // setBreadcrumbPath(prev => [...prev, { id: folder.id.toString(), name: folder.name }]);
     navigate("/drive/folder", {
       state: { id: folder.id, name: folder.file_name, folder },
     });
   };
+  // const renderBreadcrumbs = () => {
+  //   return (
+  //     <div>
+  //       {breadcrumbPath.map((crumb, index) => (
+  //         <span key={crumb.id}>
+  //           {index > 0 && " > "}
+  //           <Link to={`/drive/folder/${crumb.id}`} onClick={() => setBreadcrumbPath(breadcrumbPath.slice(0, index + 1))}>
+  //             {crumb.name}
+  //           </Link>
+  //         </span>
+  //       ))}
+  //     </div>
+  //   );
+  // };
 
   return (
     <div className="p-6">
+        {/* {renderBreadcrumbs()} */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-2 gap-6">
         {data
           .filter((folder) => folder.type === "folder") // Show only folder types

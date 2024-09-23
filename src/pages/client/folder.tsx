@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useLocation } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import Cookies from "js-cookie";
 import "./folder.css";
 import { message } from "antd";
@@ -18,6 +18,7 @@ interface FolderNode {
 const FolderDetails = () => {
   const location = useLocation();
   const { id, name, folder } = location.state || {};
+  const [breadcrumbPath, setBreadcrumbPath] = useState(location.state.breadcrumbPath || []);
   const { setCurrentFolderId } = useFolderContext();  // Corrected the function name here
   // const { folder } = location.state || {};
   const [folders, setFolders] = useState<FolderNode[]>([]);
@@ -270,9 +271,36 @@ const FolderDetails = () => {
     );
   };
 
+
+  useEffect(() => {
+    // When the folder ID changes, update the breadcrumb
+    if (id) {
+      setBreadcrumbPath((prev: any) => [...prev, { id: id, name: name }]);
+    }
+  }, [id, name]);
+
+  const renderBreadcrumbs = () => {
+    return (
+        <div className="breadcrumbs">
+            {breadcrumbPath.map((crumb: { id: React.Key | null | undefined; name: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; }, index: number) => (
+                <span key={crumb.id} className={index === breadcrumbPath.length - 1 ? "breadcrumb-active" : "breadcrumb"}>
+                    {index > 0 && <span className="breadcrumb-separator">{'>'}</span>}
+                    <Link to={index === 0 ? "/drive" : `/drive`}
+                          onClick={() => setBreadcrumbPath(breadcrumbPath.slice(0, index + 1))}>
+                        {index === 0 ? "Drive" : crumb.name}
+                    </Link>
+                </span>
+            ))}
+        </div>
+    );
+};
+
+  
   return (
+    <>
+      {renderBreadcrumbs()}
     <div className="flex min-h-screen">
-      <div className="flex-1 p-4">
+      <div className="flex-1 p-4 mt-2">
         <h1 className="text-2xl font-bold mb-4">Folders for Parent Folder: {name}</h1>
         
         {folders.length > 0 ? (
@@ -301,6 +329,7 @@ const FolderDetails = () => {
         )}
       </div>
     </div>
+    </>
   );
 };
 

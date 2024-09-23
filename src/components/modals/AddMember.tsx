@@ -34,24 +34,34 @@ const AddMemberModal: React.FC<AddMemberModalProps> = ({
   const handleInputChange = (e: { target: { value: any; }; }) => {
     const input = e.target.value;
     setInputValue(input);
-    fetchUserSuggestions(input);  // Call the API on every input change
+    if (input) {
+        fetchUserSuggestions(input);  // Call the API only if there is input
+    } else {
+        setSearchResults([]);  // Clear results if input is empty
+    }
 };
 
-const fetchUserSuggestions = async (input: any) => {
+const fetchUserSuggestions = async (input: string) => {
+  if (!input.trim()) return setSearchResults([]);  // Return if input is only whitespace
   try {
-    const response = await axios.get(`https://cms.candycloudy.com/api/handleUsers?page=1&query=${input}`);
-    if (response.data && Array.isArray(response.data.data)) {  // Make sure to access response.data.data
-      setSearchResults(response.data.data);  // Assuming response.data.data is the array
-      console.log("Fetched users:", response.data.data);
+    const response = await axios.get(`https://cms.candycloudy.com/api/handleUsers?page=1&query=${encodeURIComponent(input)}`);
+    if (response.data && Array.isArray(response.data.data)) {
+      // Filter users whose email starts with the input text
+      const matchedUsers = response.data.data.filter((user: { email: string; }) => 
+        user.email.toLowerCase().startsWith(input.toLowerCase())
+      );
+      setSearchResults(matchedUsers);
+      console.log("Filtered users:", matchedUsers);
     } else {
-      setSearchResults([]);  // Clear previous results if current fetch is empty or incorrect
+      setSearchResults([]);
       console.log("No users found or incorrect data structure:", response.data);
     }
   } catch (error) {
     console.error("Failed to fetch users:", error);
-    setSearchResults([]);  // Ensure to clear results on error
+    setSearchResults([]);
   }
 };
+
 
 
 
