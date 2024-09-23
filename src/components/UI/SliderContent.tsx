@@ -9,6 +9,7 @@ import {
   MenuProps,
   Modal,
   Typography,
+  Progress,
 } from "antd";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import Logo from "../../../src/assets/images/logo@2x.png";
@@ -53,60 +54,54 @@ export default function SliderContent() {
   const [showModal, setShowModal] = useState(false);
   const [folderName, setFolderName] = useState("");
   const workspace: any = useSelector((state: RootState) => state.workspace);
-  const { currentFolderId } = useFolderContext();
-  // console.log("workspace => 1",workspace)
+
+  const [showProgressBar, setShowProgressBar] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [totalFiles, setTotalFiles] = useState(0);
+  const [uploadedFiles, setUploadedFiles] = useState(0);
+  const [currentUploadFileName, setCurrentUploadFileName] = useState('');
+  const [uploadType, setUploadType] = useState<'file' | 'folder' | null>(null);
 
   // Helper function to get token from cookies
   const getCookie = (cookieName: string) => {
     const name = cookieName + "=";
     const decodedCookie = decodeURIComponent(document.cookie);
-    // console.log(decodedCookie);
-    // const cookieArray = decodedCookie.split(";");
-    // for (let i = 0; i < cookieArray.length; i++) {
-    //   let cookie = cookieArray[i];
-    //   while (cookie.charAt(0) === " ") {
-    //     cookie = cookie.substring(1);
-    //   }
-    //   if (cookie.indexOf(name) === 0) {
-    //     return cookie.substring(name.length, cookie.length);
-    //   }
-    // }
-    // return null;
     const cookieString = decodeURIComponent(document.cookie);
 
-    // Split the cookie string and find the relevant cookie
     const cookie = cookieString
       .split(";")
       .find((cookie) => cookie.trim().startsWith(name));
 
-    // Return the part after the '=' (cookie value), or null if not found
     return cookie ? cookie.split("=")[1].trim() : null;
   };
-  const onDrop = useCallback(async (acceptedFiles: File[]) => {
+
+  const onDrop = useCallback(
+    async (acceptedFiles: File[]) => {
       const Token = getCookie("user");
 
       if (Token === null) {
         console.error("User token not found");
-        return; // Exit early if the token is null
+        return;
       }
       setToken(Token);
 
-      // Convert the file to binary (ArrayBuffer)
+      setShowProgressBar(true);
+      setUploadType('file');
+      setUploadProgress(0);
+      setCurrentUploadFileName(acceptedFiles[0].name);
+
       const file = acceptedFiles[0];
       const reader = new FileReader();
 
       reader.onload = async () => {
         try {
-          const binaryData = reader.result; // Binary data as ArrayBuffer
+          const binaryData = reader.result;
 
           if (!binaryData) {
             console.error("Failed to read binary data");
             return;
           }
 
-          // console.log("Binary Data: ", binaryData);
-
-          // console.log("Fetching presigned URL...");
           const response = await axios.post(
             "https://cms.candycloudy.com/api/v1/s3/simple/presign",
             {},
@@ -119,21 +114,14 @@ export default function SliderContent() {
             }
           );
 
-          // console.log(response);
-
-          // Extract the key and URL from the API response
           const extractedKey = response.data.key.split("/")[1];
           const { url } = response.data;
 
           setKey(extractedKey);
-          // console.log("Presigned URL:", url);
 
-          // Convert the ArrayBuffer into a Blob
           const blobData = new Blob([binaryData], { type: file.type });
 
-          // Pass the binary data (Blob) to the upload function
-          await uploadBinaryFile(url, blobData, extractedKey, Token, file); // Pass key, token, and file for the next step
-          console.log("Uploading to folder ID:", currentFolderId);
+          await uploadBinaryFile(url, blobData, extractedKey, Token, file);
         } catch (error) {
           console.error("Error uploading file:", error);
         }
@@ -143,7 +131,6 @@ export default function SliderContent() {
         console.error("Error reading file");
       };
 
-      // Read the file as an ArrayBuffer
       reader.readAsArrayBuffer(file);
     },
     [workspace]
@@ -158,20 +145,32 @@ export default function SliderContent() {
     file: File
   ) => {
     try {
-      // Perform the PUT request with the binary file data (Blob)
-      const uploadResponse = await axios.put(presignedUrl, binaryData);
+      await axios.put(presignedUrl, binaryData, {
+        onUploadProgress: (progressEvent) => {
+          const percentCompleted = Math.round(
+            (progressEvent.loaded * 100) / progressEvent.total
+          );
+          console.log(`Upload Progress: ${percentCompleted}%`);
+          setUploadProgress(percentCompleted);
+        },
+      });
 
-      // console.log("File uploaded successfully:", uploadResponse.data);
-
-      // Call the next function if upload is successful
       await notifyFileUploadSuccess(extractedKey, token, file);
+      setShowProgressBar(false);
+      setUploadType(null);
+      setUploadProgress(0);
+      setCurrentUploadFileName('');
     } catch (error) {
       console.error("Error uploading file:", error);
     }
   };
-  // const [recent, setRecent] = useState<any[]>([]);
+
   // Function to notify API that file upload has completed
-  const notifyFileUploadSuccess = async (extractedKey: string, token: string, file: File) => {
+  const notifyFileUploadSuccess = async (
+    extractedKey: string,
+    token: string,
+    file: File
+  ) => {
     try {
       const payload = {
         clientExtension: file.name.split(".").pop(),
@@ -179,9 +178,8 @@ export default function SliderContent() {
         clientName: file.name,
         filename: extractedKey,
         size: file.size,
-        folderId: currentFolderId  // Include the current folder ID
       };
-  
+
       const response = await axios.post(
         "https://cms.candycloudy.com/api/v1/s3/entries",
         payload,
@@ -197,7 +195,6 @@ export default function SliderContent() {
       console.error("Error notifying file upload success:", error);
     }
   };
-  
 
   const { open } = useDropzone({
     onDrop,
@@ -205,9 +202,111 @@ export default function SliderContent() {
 
   const inputRef: any = useRef(null);
 
-  const handleFolderSelect = (event: any) => {
+  const handleFolderSelect = async (event: any) => {
     const files = event.target.files;
-    // console.log("Selected files:", files);
+    const token = getCookie("user");
+
+    if (!token) {
+      console.error("User token not found");
+      return;
+    }
+
+    const filesArray = Array.from(files);
+    setShowProgressBar(true);
+    setUploadType('folder');
+    setTotalFiles(filesArray.length);
+    setUploadedFiles(0);
+    setUploadProgress(0);
+
+    const folderMap = new Map();
+
+    for (let i = 0; i < filesArray.length; i++) {
+      const file = filesArray[i];
+
+      if (file.name.startsWith(".")) {
+        continue;
+      }
+
+      setCurrentUploadFileName(file.name);
+
+      const relativePath = file.webkitRelativePath;
+      const pathParts = relativePath.split("/");
+
+      let parentId = null;
+      for (let i = 0; i < pathParts.length - 1; i++) {
+        const folderName = pathParts[i];
+
+        if (!folderMap.has(folderName)) {
+          const folderResponse = await axios.post(
+            "https://cms.candycloudy.com/api/v1/folders",
+            { name: folderName, parentId },
+            {
+              headers: {
+                Accept: "application/json",
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+          const folderId = folderResponse.data?.folder?.id;
+          folderMap.set(folderName, folderId);
+          parentId = folderId;
+        } else {
+          parentId = folderMap.get(folderName);
+        }
+      }
+
+      const presignResponse = await axios.post(
+        "https://cms.candycloudy.com/api/v1/s3/simple/presign",
+        {},
+        {
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const { key, url } = presignResponse.data;
+      const blobData = new Blob([file], { type: file.type });
+
+      await axios.put(url, blobData, {
+        onUploadProgress: (progressEvent) => {
+          const percentCompleted = Math.round(
+            ((i + progressEvent.loaded / progressEvent.total) / totalFiles) * 100
+          );
+          setUploadProgress(percentCompleted);
+        },
+      });
+
+      const payload = {
+        clientExtension: file.name.split(".").pop(),
+        clientMime: file.type,
+        clientName: file.name,
+        filename: key.split("/")[1],
+        size: file.size,
+        parentId,
+      };
+
+      await axios.post("https://cms.candycloudy.com/api/v1/s3/entries", payload, {
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      setUploadedFiles((prev) => prev + 1);
+      setUploadProgress(Math.round(((i + 1) / totalFiles) * 100));
+    }
+
+    setShowProgressBar(false);
+    setUploadType(null);
+    setUploadedFiles(0);
+    setTotalFiles(0);
+    setCurrentUploadFileName('');
+    setUploadProgress(0);
   };
 
   const uploadButtonItems: MenuProps["items"] = [
@@ -221,9 +320,9 @@ export default function SliderContent() {
       label: (
         <div>
           <label htmlFor="folderInput">
-            <button onClick={() => inputRef.current.click()}>
-              Upload Folder
-            </button>
+            <span style={{ cursor: "pointer" }}>
+              <FolderOutlined /> Upload Folder
+            </span>
           </label>
           <input
             type="file"
@@ -232,14 +331,12 @@ export default function SliderContent() {
             multiple
             style={{ display: "none" }}
             onChange={handleFolderSelect}
-            onClick={() =>
-              inputRef.current.setAttribute("webkitdirectory", "true")
-            }
+            webkitdirectory="true"
+            directory="true"
           />
         </div>
       ),
       key: "2",
-      icon: <FolderOutlined />,
     },
     {
       label: "Create new folder",
@@ -274,9 +371,8 @@ export default function SliderContent() {
         }
       );
 
-      // console.log("Folder created successfully:", response.data);
-      setShowModal(false); // Close the modal
-      setFolderName(""); // Clear the folder name input
+      setShowModal(false);
+      setFolderName("");
     } catch (error) {
       console.error("Error creating folder:", error);
     }
@@ -287,20 +383,7 @@ export default function SliderContent() {
       <div className="flex cursor-pointer" onClick={() => navigate("/drive")}>
         <Image src={Logo} preview={false} width={130} />
       </div>
-      {/* <div className="hidden">
-        {recent.map((items, index) => (
-          <CardWithMenu
-            key={index}
-            item={{
-              id: items.id,
-              name: items.mime,
-              file_size: items.file_size,
-              link: items.url,
-              type: items.type,
-            }}
-          />
-        ))}
-      </div> */}
+
       <div className="flex items-center gap-4">
         <Image
           preview={false}
@@ -361,6 +444,44 @@ export default function SliderContent() {
           <Text>Trash</Text>
         </Button>
       </div>
+
+      {/* Fixed progress bar at the bottom right */}
+      {showProgressBar && (
+        <div
+          style={{
+            position: 'fixed',
+            bottom: 20,
+            right: 20,
+            backgroundColor: 'white',
+            padding: '15px',
+            boxShadow: '0 0 10px rgba(0,0,0,0.1)',
+            borderRadius: '8px',
+            width: '350px',
+            zIndex: 1000,
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            {uploadType === 'file' && (
+              <FileOutlined style={{ fontSize: '24px', marginRight: '10px' }} />
+            )}
+            {uploadType === 'folder' && (
+              <FolderOutlined style={{ fontSize: '24px', marginRight: '10px' }} />
+            )}
+            <div style={{ flex: 1 }}>
+              <Text strong>{currentUploadFileName}</Text>
+              {uploadType === 'file' && (
+                <Progress percent={uploadProgress} size="small" />
+              )}
+              {uploadType === 'folder' && (
+                <div>
+                  <Progress percent={uploadProgress} size="small" />
+                  <Text>{uploadedFiles}/{totalFiles} files uploaded</Text>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* These elements are now always visible */}
       <div className="absolute top-0 left-0 w-28">
